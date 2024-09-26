@@ -1,6 +1,41 @@
-def main():
-    print("][")
+def main() -> None:
+    board = Board()
+    # board.set_cell(40, 40, True)
+    # board.set_cell(39, 40, True)
+    # board.set_cell(41, 40, True)
+    # board.set_cell(40, 39, True)
+    # board.set_cell(39, 41, True)
+
+    board.set_cell(40, 40, True)
+    board.set_cell(40, 41, True)
+    board.set_cell(40, 42, True)
+    board.set_cell(41, 42, True)
+    board.set_cell(42, 42, True)
+    board.set_cell(42, 41, True)
+    board.set_cell(42, 40, True)
+
+    board.draw(SURFACE)
+
+    running: bool = True
+    while running:
+        for event in pygame.event.get():
+            running = not (event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)
+
+        board.update_generation()
+        board.draw(SURFACE)
+        pygame.display.update()
+
+    pygame.quit()
 
 
 if __name__ == "__main__":
+    import pygame
+    from pygame import Surface, SurfaceType
+    from board import Board
+
+    WIDTH: int = 700
+    HEIGHT: int = 700
+    SURFACE: Surface | SurfaceType = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption("NEAT Life")
+
     main()
