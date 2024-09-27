@@ -1,18 +1,22 @@
 def main() -> None:
-    board = Board()
+    board: Board = Board()
     # board.set_cell(40, 40, True)
     # board.set_cell(39, 40, True)
     # board.set_cell(41, 40, True)
     # board.set_cell(40, 39, True)
     # board.set_cell(39, 41, True)
 
-    board.set_cell(40, 40, True)
-    board.set_cell(40, 41, True)
-    board.set_cell(40, 42, True)
-    board.set_cell(41, 42, True)
-    board.set_cell(42, 42, True)
-    board.set_cell(42, 41, True)
-    board.set_cell(42, 40, True)
+    # board.set_cell(40, 40, True)
+    # board.set_cell(40, 41, True)
+    # board.set_cell(40, 42, True)
+    # board.set_cell(41, 42, True)
+    # board.set_cell(42, 42, True)
+    # board.set_cell(42, 41, True)
+    # board.set_cell(42, 40, True)
+
+    for row in range(Board.ROWS):
+        for column in range(Board.COLUMNS):
+            board.set_cell(row, column, bool(getrandbits(1)))
 
     board.draw(SURFACE)
 
@@ -32,8 +36,9 @@ if __name__ == "__main__":
     import pygame
     from pygame import Surface, SurfaceType
     from board import Board
+    from random import getrandbits
 
-    WIDTH: int = 700
+    WIDTH: int = 1000
     HEIGHT: int = 700
     SURFACE: Surface | SurfaceType = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("NEAT Life")
