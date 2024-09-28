@@ -1,3 +1,5 @@
+from math import ceil, log2, comb
+
 import pygame
 from pygame import Surface, SurfaceType
 
@@ -54,6 +56,44 @@ class Board:
                 self.__dead_cell_neighbours.update({(row_index, column_index): 1})
 
         return live_neighbour_count in [2, 3]
+
+    def get_complexity(self) -> int:
+        width: int
+        height: int
+        width, height = self.__get_min_bounding_box_dimensions()
+        width_bits: int = Board.__get_min_bits(width)
+        height_bits: int = Board.__get_min_bits(height)
+        num_live: int = len(self.__live_cell_positions)
+        num_live_bits: int = Board.__get_min_bits(num_live)
+        alpha: int = width_bits + height_bits + width * height
+        beta: int = width_bits + height_bits + num_live_bits + ceil(log2(comb(width * height, num_live)))
+        return 1 + min(alpha, beta)
+
+    def __get_min_bounding_box_dimensions(self) -> tuple[int, int]:
+        if len(self.__live_cell_positions) == 0:
+            return 0, 0
+
+        top_bound: int = 0
+        bottom_bound: int = self.ROWS - 1
+        left_bound: int = 0
+        right_bound: int = self.COLUMNS - 1
+        while not any(self.__cells[top_bound]):
+            top_bound += 1
+
+        while not any(self.__cells[bottom_bound]):
+            bottom_bound -= 1
+
+        while not any([row[left_bound] for row in self.__cells]):
+            left_bound += 1
+
+        while not any([row[right_bound] for row in self.__cells]):
+            right_bound -= 1
+
+        return right_bound - left_bound + 1, bottom_bound - top_bound + 1
+
+    @staticmethod
+    def __get_min_bits(value: int) -> int:
+        return 0 if value == 0 else ceil(log2(value + 1) + log2(value)) + 1
 
     def draw(self, surface: Surface | SurfaceType) -> None:
         surface.fill((40, 40, 40))
