@@ -5,8 +5,8 @@ from pygame import Surface, SurfaceType
 
 
 class Board:
-    ROWS: int = 175
-    COLUMNS: int = 250
+    ROWS: int = 200
+    COLUMNS: int = 200
 
     def __init__(self) -> None:
         self.__cells: list[list[bool]] = [[False for _ in range(self.COLUMNS)] for _ in range(self.ROWS)]
@@ -20,6 +20,9 @@ class Board:
             self.__live_cell_positions.remove((row, column))
 
         self.__cells[row][column] = state
+
+    def get_total_live(self) -> int:
+        return len(self.__live_cell_positions)
 
     def update_generation(self) -> None:
         next_generation: list[list[bool]] = [[False for _ in range(self.COLUMNS)] for _ in range(self.ROWS)]
@@ -105,3 +108,5 @@ class Board:
             y_pos: float = row_height * (row + 0.5)
             if self.__cells[row][column]:
                 pygame.draw.circle(surface, (200, 200, 200), (x_pos, y_pos), column_width // 2)
+
+        pygame.display.update()
