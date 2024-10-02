@@ -22,24 +22,22 @@ def eval_genomes(genomes: list[tuple[int, DefaultGenome]], config: Config) -> No
 
 def set_pattern_using_net(board: Board, net: FeedForwardNetwork) -> None:
     for row, column in GRID_POSITIONS:
-        grid_percent_pop: float = board.get_total_live() / (20 * 20) * 100
-        output: list[float] = net.activate((row, column, grid_percent_pop))
-        if output[0] > 0.5:
-            board.set_cell(row + 90, column + 90, True)
+        board_cells: list[bool] = board.get_cells_range(START_OFFSET, START_END, START_OFFSET, START_END)
+        net_inputs: tuple = tuple([row, column] + board_cells)
+        output: list[float] = net.activate(net_inputs)
+        if output[0] > 0:
+            board.set_cell(row + START_OFFSET, column + START_OFFSET, True)
 
 
-def run_starting_pattern(board: Board) -> int:
+def run_starting_pattern(board: Board) -> float:
     board.draw(SURFACE)
-    max_complexity: int = board.get_complexity()
-    current_complexity: int = max_complexity
-    for _ in range(100):
+    total_complexity: int = 0
+    for _ in range(ALLOWED_STEPS):
         board.update_generation()
         board.draw(SURFACE)
-        current_complexity = board.get_complexity()
-        if current_complexity > max_complexity:
-            max_complexity = current_complexity
+        total_complexity += board.get_complexity()
 
-    return max_complexity * current_complexity
+    return total_complexity / ALLOWED_STEPS
 
 
 def main() -> None:
@@ -51,7 +49,7 @@ def main() -> None:
     population.add_reporter(neat.StdOutReporter(True))
     stats: StatisticsReporter = neat.StatisticsReporter()
     population.add_reporter(stats)
-    winner: object | None = population.run(eval_genomes, 25)
+    winner: object | None = population.run(eval_genomes, 30)
     print(f"\nBest genome:\n{winner}")
     winner_net: FeedForwardNetwork = neat.nn.FeedForwardNetwork.create(winner, config)
 
@@ -64,7 +62,7 @@ def main() -> None:
     start_updates: bool = False
     reset_board: bool = False
     while running:
-        CLOCK.tick(60)
+        CLOCK.tick(30)
 
         for event in pygame.event.get():
             running = not (event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)
@@ -84,7 +82,11 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    GRID_POSITIONS: list[tuple[int, int]] = [(row, column) for row in range(20) for column in range(20)]
+    START_SIZE: int = 15  # make sure to update the num_inputs parameter in the config file to be START_SIZE^2 + 2
+    START_OFFSET: int = Board.ROWS // 2 - START_SIZE // 2
+    START_END: int = START_OFFSET + START_SIZE  # because confusing names are funny
+    GRID_POSITIONS: list[tuple[int, int]] = [(row, column) for row in range(START_SIZE) for column in range(START_SIZE)]
+    ALLOWED_STEPS: int = 200
     WIDTH: int = 800
     HEIGHT: int = 800
     SURFACE: Surface | SurfaceType = pygame.display.set_mode((WIDTH, HEIGHT))

@@ -21,6 +21,13 @@ class Board:
 
         self.__cells[row][column] = state
 
+    def get_cells_range(self, start_row: int, end_row: int, start_column: int, end_column: int) -> list[bool]:
+        cells_1d = []
+        for row in self.__cells[start_row:end_row]:
+            cells_1d += row[start_column:end_column]
+
+        return cells_1d
+
     def get_total_live(self) -> int:
         return len(self.__live_cell_positions)
 
