@@ -12,6 +12,7 @@ class Board:
         self.__cells: list[list[bool]] = [[False for _ in range(self.COLUMNS)] for _ in range(self.ROWS)]
         self.__live_cell_positions: list[tuple[int, int]] = []
         self.__dead_cell_neighbours: dict[tuple[int, int], int] = {}
+        self.__cell_periodicity: list[list[int]] = [[0 for _ in range(self.COLUMNS)] for _ in range(self.ROWS)]
 
     def set_cell(self, row: int, column: int, state: bool) -> None:
         if not self.__cells[row][column] and state:
@@ -80,7 +81,7 @@ class Board:
         return 1 + min(alpha, beta)
 
     def __get_min_bounding_box_dimensions(self) -> tuple[int, int]:
-        if len(self.__live_cell_positions) == 0:
+        if not self.__live_cell_positions:
             return 0, 0
 
         top_bound: int = 0
@@ -111,9 +112,9 @@ class Board:
         column_width: int = surface.get_width() // self.COLUMNS
         row_height: int = surface.get_height() // self.ROWS
         for row, column in self.__live_cell_positions:
-            x_pos: float = column_width * (column + 0.5)
-            y_pos: float = row_height * (row + 0.5)
             if self.__cells[row][column]:
+                x_pos: float = column_width * (column + 0.5)
+                y_pos: float = row_height * (row + 0.5)
                 pygame.draw.circle(surface, (200, 200, 200), (x_pos, y_pos), column_width // 2)
 
         pygame.display.update()
