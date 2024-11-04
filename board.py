@@ -9,10 +9,10 @@ class Board:
     COLUMNS: int = 200
 
     def __init__(self) -> None:
-        self.__cells: list[list[bool]] = [[False for _ in range(self.COLUMNS)] for _ in range(self.ROWS)]
+        self.__cells: list[list[bool]] = [[False for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]
         self.__live_cell_positions: list[tuple[int, int]] = []
         self.__dead_cell_neighbours: dict[tuple[int, int], int] = {}
-        self.__cell_periodicity: list[list[int]] = [[0 for _ in range(self.COLUMNS)] for _ in range(self.ROWS)]
+        self.__cell_periodicity: list[list[int]] = [[0 for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]
 
     def set_cell(self, row: int, column: int, state: bool) -> None:
         if not self.__cells[row][column] and state:
@@ -33,7 +33,7 @@ class Board:
         return len(self.__live_cell_positions)
 
     def update_generation(self) -> None:
-        next_generation: list[list[bool]] = [[False for _ in range(self.COLUMNS)] for _ in range(self.ROWS)]
+        next_generation: list[list[bool]] = [[False for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]
         next_live_cells: list[tuple[int, int]] = []
 
         for live_cell in self.__live_cell_positions:
@@ -85,9 +85,9 @@ class Board:
             return 0, 0
 
         top_bound: int = 0
-        bottom_bound: int = self.ROWS - 1
+        bottom_bound: int = Board.ROWS - 1
         left_bound: int = 0
-        right_bound: int = self.COLUMNS - 1
+        right_bound: int = Board.COLUMNS - 1
         while not any(self.__cells[top_bound]):
             top_bound += 1
 
@@ -106,15 +106,19 @@ class Board:
     def __get_min_bits(value: int) -> int:
         return 0 if value == 0 else ceil(log2(value + 1) + log2(value)) + 1
 
-    def draw(self, surface: Surface | SurfaceType) -> None:
+    def draw(self, surface: Surface | SurfaceType, view_attributes: list[int]) -> None:
         surface.fill((40, 40, 40))
 
-        column_width: int = surface.get_width() // self.COLUMNS
-        row_height: int = surface.get_height() // self.ROWS
+        view_top: int = view_attributes[0]
+        view_left: int = view_attributes[1]
+        view_bottom: int = view_attributes[2]
+        view_right: int = view_attributes[3]
+        column_width: float = surface.get_width() / (view_right - view_left)
+        row_height: float = surface.get_height() / (view_bottom - view_top)
         for row, column in self.__live_cell_positions:
-            if self.__cells[row][column]:
-                x_pos: float = column_width * (column + 0.5)
-                y_pos: float = row_height * (row + 0.5)
-                pygame.draw.circle(surface, (200, 200, 200), (x_pos, y_pos), column_width // 2)
+            if self.__cells[row][column] and view_top <= row <= view_bottom and view_left <= column <= view_right:
+                x_pos: float = column_width * (column - view_left + 0.5)
+                y_pos: float = row_height * (row - view_top + 0.5)
+                pygame.draw.circle(surface, (200, 200, 200), (x_pos, y_pos), column_width / 2)
 
         pygame.display.update()

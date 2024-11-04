@@ -30,22 +30,22 @@ def set_pattern_using_net(board: Board, net: FeedForwardNetwork) -> None:
 
 
 def run_starting_pattern(board: Board) -> float:
-    board.draw(SURFACE)
+    board.draw(SURFACE, [0, 0, Board.COLUMNS, Board.ROWS])
     total_complexity: int = 0
     for _ in range(ALLOWED_STEPS):
         board.update_generation()
-        board.draw(SURFACE)
+        board.draw(SURFACE, [0, 0, Board.COLUMNS, Board.ROWS])
         total_complexity += board.get_complexity()
 
     return total_complexity / ALLOWED_STEPS
 
 
 def set_manual_pattern(board: Board) -> None:
-    board.set_cell(100, 100, True)
-    board.set_cell(101, 100, True)
-    board.set_cell(102, 100, True)
-    board.set_cell(101, 99, True)
-    board.set_cell(100, 101, True)
+    board.set_cell(25, 25, True)
+    board.set_cell(26, 25, True)
+    board.set_cell(27, 25, True)
+    board.set_cell(26, 24, True)
+    board.set_cell(25, 26, True)
 
 
 def get_starting_board(use_neat: bool = False) -> Board:
@@ -71,14 +71,56 @@ def get_starting_board(use_neat: bool = False) -> Board:
     return board
 
 
+def zoom_view(view_attributes: list[int], scroll: int) -> list[int]:
+    top: int = view_attributes[0]
+    left: int = view_attributes[1]
+    bottom: int = view_attributes[2]
+    right: int = view_attributes[3]
+
+    top, bottom = (0, bottom - scroll) if top + scroll < 0 else (top + scroll, bottom)
+    left, right = (0, right - scroll) if left + scroll < 0 else (left + scroll, right)
+    bottom, top = (Board.ROWS, top + scroll) if bottom - scroll > Board.ROWS else (bottom - scroll, top)
+    right, left = (Board.COLUMNS, left + scroll) if right - scroll > Board.COLUMNS else (right - scroll, left)
+    view_width: int = right - left
+    view_height: int = bottom - top
+    if not 2 <= view_width <= Board.COLUMNS or not 2 <= view_height <= Board.ROWS:
+        return view_attributes
+
+    return [top, left, bottom, right]
+
+
+def move_view(cond: bool, board: Board, attributes: list[int], indices: tuple[int, int], diff: int) -> None:
+    if cond:
+        attributes[indices[0]] = attributes[indices[0]] + diff
+        attributes[indices[1]] = attributes[indices[1]] + diff
+        board.draw(SURFACE, attributes)
+
+
+def do_scroll(mouse_scroll: int, view_attributes: list[int], board: Board) -> tuple[int, list[int]]:
+    if mouse_scroll != 0:
+        view_attributes = zoom_view(view_attributes, mouse_scroll)
+        view_attributes = zoom_view(view_attributes, mouse_scroll)
+        view_attributes = zoom_view(view_attributes, mouse_scroll)
+        view_attributes = zoom_view(view_attributes, mouse_scroll)
+        board.draw(SURFACE, view_attributes)
+
+    return 0, view_attributes
+
+
 def main() -> None:
-    board: Board = get_starting_board(use_neat=True)
+    view_attributes: list[int] = [0, 0, Board.ROWS, Board.COLUMNS]  # top, left, bottom, right
+    board: Board = get_starting_board(use_neat=False)
     board_copy: Board = deepcopy(board)
-    board.draw(SURFACE)
+    board.draw(SURFACE, view_attributes)
 
     running: bool = True
     start_updates: bool = False
     reset_board: bool = False
+    mouse_scroll: int = 0
+    move_up: bool = False
+    move_down: bool = False
+    move_left: bool = False
+    move_right: bool = False
     while running:
         CLOCK.tick(30)
 
@@ -86,15 +128,27 @@ def main() -> None:
             running = not (event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)
             start_updates = event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE or start_updates
             reset_board = event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN
+            move_up = event.type == pygame.KEYDOWN and event.key == pygame.K_UP
+            move_down = event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN
+            move_left = event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT
+            move_right = event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT
+            mouse_scroll = event.y if event.type == pygame.MOUSEWHEEL else 0
+
+        move_view(move_up and view_attributes[0] - 1 >= 0, board, view_attributes, (0, 2), -1)
+        move_view(move_down and view_attributes[2] + 1 <= Board.ROWS, board, view_attributes, (0, 2), 1)
+        move_view(move_left and view_attributes[1] - 1 >= 0, board, view_attributes, (1, 3), -1)
+        move_view(move_right and view_attributes[3] + 1 <= Board.COLUMNS, board, view_attributes, (1, 3), 1)
+        mouse_scroll, view_attributes = do_scroll(mouse_scroll, view_attributes, board)
 
         if reset_board:
             board = deepcopy(board_copy)
-            board.draw(SURFACE)
+            board.draw(SURFACE, view_attributes)
             start_updates = False
+            reset_board = False
 
         if start_updates:
             board.update_generation()
-            board.draw(SURFACE)
+            board.draw(SURFACE, view_attributes)
 
     pygame.quit()
 
