@@ -7,6 +7,8 @@ from neat import Population, StatisticsReporter, Config, DefaultGenome
 from neat.nn import FeedForwardNetwork
 from pygame import Surface, SurfaceType
 from pygame.time import Clock
+import matplotlib.pyplot as plt
+import numpy as np
 
 from board import Board
 
@@ -46,7 +48,41 @@ def set_manual_pattern(board: Board) -> None:
     board.set_cell(27, 25, True)
     board.set_cell(26, 24, True)
     board.set_cell(25, 26, True)
+    board.set_cell(25, 28, True)
+    board.set_cell(25, 29, True)
+    board.set_cell(24, 29, True)
 
+    # board.set_cell(25, 25, True)
+    # board.set_cell(26, 25, True)
+    # board.set_cell(27, 25, True)
+
+    # board.set_cell(25, 25, True)
+    # board.set_cell(25, 26, True)
+    # board.set_cell(25, 27, True)
+    # board.set_cell(24, 27, True)
+    # board.set_cell(23, 26, True)
+
+    # board.set_cell(25, 25, True)
+    # board.set_cell(25, 26, True)
+    # board.set_cell(25, 27, True)
+    # board.set_cell(26, 27, True)
+    # board.set_cell(27, 25, True)
+    # board.set_cell(27, 26, True)
+    # board.set_cell(27, 27, True)
+
+    # board.set_cell(40, 40, True)
+    # board.set_cell(40, 41, True)
+    # board.set_cell(38, 41, True)
+    # board.set_cell(39, 43, True)
+    # board.set_cell(40, 44, True)
+    # board.set_cell(40, 45, True)
+    # board.set_cell(40, 46, True)
+
+    # board.set_cell(40, 40, True)
+    # board.set_cell(39, 40, True)
+    # board.set_cell(38, 41, True)
+    # board.set_cell(38, 42, True)
+    # board.set_cell(38, 43, True)
 
 def get_starting_board(use_neat: bool = False) -> Board:
     board: Board = Board()
@@ -115,18 +151,21 @@ def main() -> None:
 
     running: bool = True
     start_updates: bool = False
+    single_update: bool = False
     reset_board: bool = False
     mouse_scroll: int = 0
     move_up: bool = False
     move_down: bool = False
     move_left: bool = False
     move_right: bool = False
+    average_activities: list[float] = []
     while running:
-        CLOCK.tick(30)
+        # CLOCK.tick(30)
 
         for event in pygame.event.get():
             running = not (event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE)
-            start_updates = event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE or start_updates
+            start_updates = event.type == pygame.KEYDOWN and event.key == pygame.K_a or start_updates
+            single_update = event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE or single_update
             reset_board = event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN
             move_up = event.type == pygame.KEYDOWN and event.key == pygame.K_UP
             move_down = event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN
@@ -148,9 +187,21 @@ def main() -> None:
 
         if start_updates:
             board.update_generation()
+            average_activities.append(board.get_average_activity())
             board.draw(SURFACE, view_attributes)
 
+        if single_update:
+            board.update_generation()
+            board.draw(SURFACE, view_attributes)
+            single_update = False
+
     pygame.quit()
+
+    x_points = np.array([i for i in range(len(average_activities))])
+    y_points = np.array(average_activities)
+
+    plt.plot(x_points, y_points)
+    plt.show()
 
 
 if __name__ == "__main__":

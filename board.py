@@ -12,7 +12,8 @@ class Board:
         self.__cells: list[list[bool]] = [[False for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]
         self.__live_cell_positions: list[tuple[int, int]] = []
         self.__dead_cell_neighbours: dict[tuple[int, int], int] = {}
-        self.__cell_periodicity: list[list[int]] = [[0 for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]
+        # self.__cell_periodicity: list[list[int]] = [[0 for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]
+        self.__cell_activities: dict[tuple[int, int], int] = {}
 
     def set_cell(self, row: int, column: int, state: bool) -> None:
         if not self.__cells[row][column] and state:
@@ -32,6 +33,10 @@ class Board:
     def get_total_live(self) -> int:
         return len(self.__live_cell_positions)
 
+    def get_average_activity(self) -> float:
+        activities: list[int] = list(self.__cell_activities.values())
+        return 0 if len(activities) == 0 else sum(activities) / len(activities)
+
     def update_generation(self) -> None:
         next_generation: list[list[bool]] = [[False for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]
         next_live_cells: list[tuple[int, int]] = []
@@ -40,15 +45,33 @@ class Board:
             if self.__cell_stays_live(live_cell[0], live_cell[1]):
                 next_generation[live_cell[0]][live_cell[1]] = True
                 next_live_cells.append((live_cell[0], live_cell[1]))
+                self.__update_activity(live_cell, -1)
+            else:
+                self.__update_activity(live_cell, 0, set_activity=True)
 
         for dead_cell in self.__dead_cell_neighbours:
             if self.__dead_cell_neighbours[dead_cell] == 3:
                 next_generation[dead_cell[0]][dead_cell[1]] = True
                 next_live_cells.append((dead_cell[0], dead_cell[1]))
+                self.__update_activity(dead_cell, 50)
+            else:
+                self.__update_activity(dead_cell, 0, set_activity=True)
 
         self.__cells = next_generation
         self.__live_cell_positions = next_live_cells
         self.__dead_cell_neighbours.clear()
+
+    def __update_activity(self, row_column: tuple[int, int], activity: int, set_activity: bool = False) -> None:
+        if row_column in self.__cell_activities:
+            if set_activity:
+                self.__cell_activities[row_column] = activity
+            else:
+                self.__cell_activities[row_column] += activity
+        else:
+            self.__cell_activities.update({row_column: activity})
+
+        if self.__cell_activities[row_column] <= 0:
+            self.__cell_activities.pop(row_column)
 
     def __cell_stays_live(self, row: int, column: int) -> bool:
         live_neighbour_count: int = 0
