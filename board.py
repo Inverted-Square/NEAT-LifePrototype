@@ -5,8 +5,8 @@ from pygame import Surface, SurfaceType
 
 
 class Board:
-    ROWS: int = 200
-    COLUMNS: int = 200
+    ROWS: int = 350
+    COLUMNS: int = 350
 
     def __init__(self) -> None:
         self.__cells: list[list[bool]] = [[False for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]

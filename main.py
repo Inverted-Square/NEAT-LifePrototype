@@ -1,14 +1,14 @@
 import os
 from copy import deepcopy
 
+import matplotlib.pyplot as plt
 import neat
+import numpy as np
 import pygame
 from neat import Population, StatisticsReporter, Config, DefaultGenome
 from neat.nn import FeedForwardNetwork
 from pygame import Surface, SurfaceType
 from pygame.time import Clock
-import matplotlib.pyplot as plt
-import numpy as np
 
 from board import Board
 
@@ -24,22 +24,24 @@ def eval_genomes(genomes: list[tuple[int, DefaultGenome]], config: Config) -> No
 
 def set_pattern_using_net(board: Board, net: FeedForwardNetwork) -> None:
     for row, column in GRID_POSITIONS:
-        board_cells: list[bool] = board.get_cells_range(START_OFFSET, START_END, START_OFFSET, START_END)
+        board_cells: list[bool] = board.get_cells_range(START_Y_OFFSET, START_Y_END, START_X_OFFSET, START_X_END)
         net_inputs: tuple = tuple([row, column] + board_cells)
         output: list[float] = net.activate(net_inputs)
         if output[0] > 0:
-            board.set_cell(row + START_OFFSET, column + START_OFFSET, True)
+            board.set_cell(row + START_Y_OFFSET, column + START_X_OFFSET, True)
 
 
 def run_starting_pattern(board: Board) -> float:
     board.draw(SURFACE, [0, 0, Board.COLUMNS, Board.ROWS])
-    total_complexity: int = 0
-    for _ in range(ALLOWED_STEPS):
+    activities = np.array([])
+    for step in range(MAX_STEPS):
         board.update_generation()
         board.draw(SURFACE, [0, 0, Board.COLUMNS, Board.ROWS])
-        total_complexity += board.get_complexity()
+        activities = np.insert(activities, 0, board.get_average_activity())
+        if activities.size >= MAX_SAME and np.unique(activities[:MAX_SAME]).size <= 4:
+            return step + 1 - MAX_SAME
 
-    return total_complexity / ALLOWED_STEPS
+    return MAX_STEPS
 
 
 def set_manual_pattern(board: Board) -> None:
@@ -83,6 +85,7 @@ def set_manual_pattern(board: Board) -> None:
     # board.set_cell(38, 41, True)
     # board.set_cell(38, 42, True)
     # board.set_cell(38, 43, True)
+
 
 def get_starting_board(use_neat: bool = False) -> Board:
     board: Board = Board()
@@ -145,7 +148,7 @@ def do_scroll(mouse_scroll: int, view_attributes: list[int], board: Board) -> tu
 
 def main() -> None:
     view_attributes: list[int] = [0, 0, Board.ROWS, Board.COLUMNS]  # top, left, bottom, right
-    board: Board = get_starting_board(use_neat=False)
+    board: Board = get_starting_board(use_neat=True)
     board_copy: Board = deepcopy(board)
     board.draw(SURFACE, view_attributes)
 
@@ -205,13 +208,18 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    START_SIZE: int = 9  # make sure to update the num_inputs parameter in the config file to be START_SIZE^2 + 2
-    START_OFFSET: int = Board.ROWS // 2 - START_SIZE // 2
-    START_END: int = START_OFFSET + START_SIZE  # because confusing names are funny
-    GRID_POSITIONS: list[tuple[int, int]] = [(row, column) for row in range(START_SIZE) for column in range(START_SIZE)]
-    ALLOWED_STEPS: int = 100
-    WIDTH: int = 800
-    HEIGHT: int = 800
+    NEAT_WIDTH: int = 9
+    NEAT_HEIGHT: int = 6
+    START_X_OFFSET: int = Board.COLUMNS // 2 - NEAT_WIDTH // 2
+    START_Y_OFFSET: int = Board.ROWS // 2 - NEAT_HEIGHT // 2
+    START_X_END: int = START_X_OFFSET + NEAT_WIDTH  # because confusing names are funny
+    START_Y_END: int = START_Y_OFFSET + NEAT_HEIGHT  # because confusing names are funny
+    GRID_POSITIONS: list[tuple[int, int]] = [(row, column) for row in range(NEAT_HEIGHT) for column in
+                                             range(NEAT_WIDTH)]
+    MAX_STEPS: int = 10000
+    MAX_SAME: int = 25
+    WIDTH: int = 700
+    HEIGHT: int = 700
     SURFACE: Surface | SurfaceType = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("NEAT Life")
     CLOCK: Clock = pygame.time.Clock()
