@@ -2,7 +2,7 @@
 fitness_criterion = max
 fitness_threshold = 1000000
 no_fitness_termination = True
-pop_size = 20
+pop_size = 25
 reset_on_extinction = True
 
 [DefaultGenome]
@@ -47,7 +47,7 @@ node_delete_prob = 0.2
 
 # network parameters
 num_hidden = 0
-num_inputs = 56
+num_inputs = 102
 num_outputs = 1
 
 # node response options

@@ -5,8 +5,8 @@ from pygame import Surface, SurfaceType
 
 
 class Board:
-    ROWS: int = 350
-    COLUMNS: int = 350
+    ROWS: int = 200
+    COLUMNS: int = 200
 
     def __init__(self) -> None:
         self.__cells: list[list[bool]] = [[False for _ in range(Board.COLUMNS)] for _ in range(Board.ROWS)]
@@ -142,6 +142,6 @@ class Board:
             if self.__cells[row][column] and view_top <= row <= view_bottom and view_left <= column <= view_right:
                 x_pos: float = column_width * (column - view_left + 0.5)
                 y_pos: float = row_height * (row - view_top + 0.5)
-                pygame.draw.circle(surface, (200, 200, 200), (x_pos, y_pos), column_width / 2)
+                pygame.draw.rect(surface, (200, 200, 200), (column_width * column, row_height * row, column_width, row_height))
 
         pygame.display.update()
